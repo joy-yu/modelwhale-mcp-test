@@ -1,0 +1,52 @@
+{
+  "name": "modelwhale-mcp-test",
+  "version": "1.0.0",
+  "description": "这是一个模型上下文协议 (MCP) 服务器，用于提供ModelWhale信息。支持两种传输方式：stdio 和 SSE (Server-Sent Events)，通过环境变量控制。",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "modelwhale",
+    "typescript",
+    "server",
+    "stdio",
+    "sse"
+  ],
+  "author": "joy-yu",
+  "license": "ISC",
+  "type": "module",
+  "main": "build/index.js",
+  "bin": {
+    "modelwhale": "build/index.js"
+  },
+  "files": [
+    "build",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc && chmod 755 build/index.js",
+    "build:watch": "tsc --watch",
+    "start": "npm run build && node build/index.js",
+    "start:stdio": "npm run build && TRANSPORT_MODE=stdio node build/index.js",
+    "start:sse": "npm run build && TRANSPORT_MODE=sse node build/index.js",
+    "start:streamable": "npm run build && TRANSPORT_MODE=streamable-http node build/index.js",
+    "dev": "concurrently \"npm run build:watch\" \"nodemon --delay 1000ms build/index.js\"",
+    "dev:stdio": "concurrently \"npm run build:watch\" \"TRANSPORT_MODE=stdio nodemon --delay 1000ms build/index.js\"",
+    "dev:sse": "concurrently \"npm run build:watch\" \"TRANSPORT_MODE=sse nodemon --delay 1000ms build/index.js\"",
+    "dev:streamable": "concurrently \"npm run build:watch\" \"TRANSPORT_MODE=streamable-http nodemon --delay 1000ms build/index.js\"",
+    "debug": "npx @modelcontextprotocol/inspector node build/index",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "express": "^5.1.0",
+    "zod": "^3.25.20"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.15.21",
+    "concurrently": "^9.1.2",
+    "dotenv": "^16.5.0",
+    "nodemon": "^3.1.10",
+    "typescript": "^5.8.3"
+  }
+}

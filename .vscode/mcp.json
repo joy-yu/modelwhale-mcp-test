@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "modelwhale-server-stdio": {
+      "command": "node",
+      "args": ["${workspaceFolder}/build/index.js"],
+      "envFile": "${workspaceFolder}/.env"
+    }
+  }
+}
