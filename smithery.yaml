@@ -1,0 +1,31 @@
+# Smithery configuration file: https://smithery.ai/docs/build/project-config
+
+startCommand:
+  type: stdio
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'node',
+      args: ['build/index.js'],
+      env: {
+        MODELWHALE_TOKEN: config.modelWhaleToken,
+        TRANSPORT_MODE: config.transportMode || 'stdio'
+      }
+    })
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - modelWhaleToken
+    properties:
+      modelWhaleToken:
+        type: string
+        description: ModelWhale API token
+      transportMode:
+        type: string
+        default: stdio
+        description: Transport mode for MCP server
+  exampleConfig:
+    modelWhaleToken: your_modelwhale_token_here
+    transportMode: stdio
