@@ -1,5 +1,7 @@
 # MCP ModelWhale 服务器
 
+[![smithery badge](https://smithery.ai/badge/@joy-yu/modelwhale-mcp-test)](https://smithery.ai/server/@joy-yu/modelwhale-mcp-test)
+
 这是一个模型上下文协议 (MCP) 服务器，可通过 User Token 访问 ModelWhale API 拿到相关信息。支持三种传输方式：stdio、SSE (Server-Sent Events) 和 StreamableHTTP，通过环境变量控制。
 
 ## 先决条件
@@ -176,3 +178,4 @@ npm run start:streamable
 # 在另一个终端运行测试
 node test/test-streamable-http.js
 ```
+
