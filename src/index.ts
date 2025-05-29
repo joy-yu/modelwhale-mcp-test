@@ -1,8 +1,10 @@
 import 'dotenv/config';
 import { runStdioMode, runSSEMode, runStreamableHTTPMode } from './transport.js';
 
+type TransportMode = 'stdio' | 'sse' | 'streamable-http' | undefined;
+
 // 环境变量配置
-const TRANSPORT_MODE = process.env.TRANSPORT_MODE || 'stdio'; // 'stdio', 'sse', 或 'streamable-http'
+const TRANSPORT_MODE = (process.env.TRANSPORT_MODE as TransportMode) || 'stdio';
 const PORT = parseInt(process.env.PORT || '3000');
 const MODELWHALE_TOKEN = process.env.MODELWHALE_TOKEN;
 
@@ -15,6 +17,7 @@ async function main() {
     if (!MODELWHALE_TOKEN) {
       throw new Error('环境变量 MODELWHALE_TOKEN 未设置');
     }
+
     switch (TRANSPORT_MODE.toLowerCase()) {
       case 'sse':
         await runSSEMode(PORT);

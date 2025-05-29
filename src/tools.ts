@@ -220,6 +220,69 @@ function registerMpiJobTool(server: McpServer) {
   );
 }
 
+// 注册模型服务工具
+function registerModelServiceTool(server: McpServer) {
+  const statusMap = {
+    0: '启动中',
+    1: '就绪',
+    2: '删除中',
+    3: '启动失败',
+    5: '休眠中',
+    '-2': '初始化中',
+  };
+
+  server.tool('get-model-service-list', '获取我的模型服务列表', {}, async ({}) => {
+    const params = new URLSearchParams({
+      type: '1',
+    });
+    const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/model/services?${params}`);
+    if (!resp) {
+      return getDefaultError();
+    }
+
+    return {
+      content: resp.data
+        .filter((v) => v.Status !== -1)
+        .map((v) => ({
+          type: 'text',
+          text: [`模型服务名称: ${v.Title}`, `模型服务状态: ${statusMap[v.Status] || '未知状态'}`, `模型服务 ID: ${v._id}`].join('\n'),
+        })),
+    };
+  });
+
+  server.tool(
+    'get-model-service-log',
+    '获取指定 ID 模型服务的日志',
+    {
+      id: z.string().describe('模型服务 ID'),
+    },
+    async ({ id }) => {
+      const params = new URLSearchParams({
+        start: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 最近一天
+        end: new Date().toISOString(),
+        tail: '100',
+        direction: 'backward',
+      });
+      const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/model/services/${id}/logs?${params}`);
+      if (!resp) {
+        return getDefaultError();
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: resp.data.result
+              .map((item) => item.values.map((v) => v[1]))
+              .flat()
+              .join(''),
+          },
+        ],
+      };
+    }
+  );
+}
+
 // 注册其它工具
 function registerOtherTool(server: McpServer) {
   server.tool('get-token-coin', '获取本人剩余代币数量', {}, async ({}) => {
@@ -243,5 +306,6 @@ function registerOtherTool(server: McpServer) {
 export function registerAllTools(server: McpServer) {
   registerLabTool(server);
   registerMpiJobTool(server);
+  registerModelServiceTool(server);
   registerOtherTool(server);
 }
