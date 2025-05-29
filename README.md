@@ -1,6 +1,6 @@
 # MCP ModelWhale 服务器
 
-这是一个模型上下文协议 (MCP) 服务器，用于提供 ModelWhale 接口的相关信息。支持三种传输方式：stdio、SSE (Server-Sent Events) 和 StreamableHTTP，通过环境变量控制。
+这是一个模型上下文协议 (MCP) 服务器，可通过 User Token 访问 ModelWhale API 拿到相关信息。支持三种传输方式：stdio、SSE (Server-Sent Events) 和 StreamableHTTP，通过环境变量控制。
 
 ## 先决条件
 
@@ -14,20 +14,22 @@
    ```bash
    npm ci
    ```
+3. 设置环境变量，具体环境变量解释可参考 `.env.example` 文件
+     ```bash
+     # 复制一份 .env 文件
+     cp .env.example .env
 
-
-## 环境变量设置
-
-| 变量名           | 默认值  | 描述                                              |
-| ---------------- | ------- | ------------------------------------------------- |
-| `TRANSPORT_MODE` | `stdio` | 传输模式：`stdio`、`sse` 或 `streamable-http`     |
-| `PORT`           | `3000`  | HTTP端口（仅在 SSE 和 StreamableHTTP 模式下有效） |
+     # 打开 .env 文件设置 token
+     MODELWHALE_TOKEN=your_token
+     ```
 
 
 
 ## 开发调试
 
 开发时可以使用以下命令自动构建并启动：
+- 已支持 dev 热更新，测试下来  **SSE 模式开发调试更方便**
+- dev 默认开启 inspector，运行命令后打开 http://127.0.0.1:6274 访问即可
 
 ```bash
 # 默认 stdio 开发模式
@@ -36,18 +38,12 @@ npm run dev
 # stdio 开发模式
 npm run dev:stdio
 
-# SSE 开发模式  
+# SSE 开发模式(推荐)
 npm run dev:sse
 
 # StreamableHTTP 开发模式
 npm run dev:streamable
 ```
-
-可新开命令行启动 inspector 调试界面：
-```bash
-npm run debug
-```
-
 
 
 ## 运行服务器
@@ -85,6 +81,7 @@ SSE 服务器提供以下端点：
 - `POST /messages` - 发送消息到服务器
 - `GET /health` - 健康检查端点
 
+
 ### 方式 3: StreamableHTTP 传输方式（推荐）
 
 ```bash
@@ -101,11 +98,6 @@ TRANSPORT_MODE=streamable-http PORT=8080 npm start
 StreamableHTTP 服务器提供以下端点：
 - `GET/POST/DELETE /mcp` - 处理所有 MCP 请求
 - `GET /health` - 健康检查端点
-
-> 📖 **详细使用指南**: 查看 [StreamableHTTP 传输使用示例](./STREAMABLE_HTTP_GUIDE.md) 了解完整的 API 使用方法和示例。
-
-
-
 
 
 
@@ -184,17 +176,3 @@ npm run start:streamable
 # 在另一个终端运行测试
 node test/test-streamable-http.js
 ```
-
-## 故障排除
-
-- **错误：未能获取ModelWhale数据：**
-  - 确保传递给工具的 API 密钥正确且有效。
-  - 检查 ModelWhale API 地址和服务是否正常运行。
-- **服务器无法启动：**
-  - 确保 Node.js 已正确安装。
-  - 确保已安装所有依赖项 (`npm ci`)。
-  - 检查构建过程中是否有错误 (`npm run build`)。
-- **SSE 连接问题：**
-  - 检查端口 3000 是否被占用。
-  - 确保防火墙允许该端口的连接。
-  - 查看服务器日志以获取详细错误信息。
