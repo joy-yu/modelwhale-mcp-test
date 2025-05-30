@@ -100,10 +100,12 @@ function registerLabTool(server: McpServer) {
       const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/notebooks?${params}`, { headers: { authorization: detailResp.labToken } });
 
       return {
-        content: resp.data.map((v) => ({
-          type: 'text',
-          text: [`Notebook 名称: ${v.Name}`, `Notebook ID: ${v._id}`].join('\n'),
-        })),
+        content: resp.data
+          .filter((v) => !v.IsCanvas)
+          .map((v) => ({
+            type: 'text',
+            text: [`Notebook 名称: ${v.Name}`, `Notebook ID: ${v._id}`].join('\n'),
+          })),
       };
     }
   );
@@ -212,7 +214,7 @@ function registerMpiJobTool(server: McpServer) {
         content: [
           {
             type: 'text',
-            text: resp,
+            text: typeof resp === 'string' ? resp : JSON.stringify(resp, null, 2),
           },
         ],
       };

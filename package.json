@@ -8,7 +8,7 @@
   "type": "module",
   "main": "build/index.js",
   "bin": {
-    "modelwhale": "build/index.js"
+    "modelwhale-mcp": "build/index.js"
   },
   "files": [
     "build",
