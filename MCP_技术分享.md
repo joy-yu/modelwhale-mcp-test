@@ -593,34 +593,7 @@ graph TD
     style C5 fill:#e3f2fd
 ```
 
-### 2. 开发效率对比
-
-```mermaid
-gantt
-    title 开发时间对比
-    dateFormat X
-    axisFormat %s
-
-    section 传统方式
-    应用A开发外部连接    :done, traditional1, 0, 30
-    应用B重复开发        :done, traditional2, 0, 30
-    应用C重复开发        :done, traditional3, 0, 30
-    应用D重复开发        :done, traditional4, 0, 30
-    A维护更新（每个应用）  :crit, maintenance1, 30, 50
-    B维护更新（每个应用）  :crit, maintenance1, 30, 50
-    C维护更新（每个应用）  :crit, maintenance1, 30, 50
-    D维护更新（每个应用）  :crit, maintenance1, 30, 50
-
-    section MCP 方式
-    开发MCP服务器       :done, mcp1, 0, 15
-    应用A集成MCP        :done, mcp2, 15, 20
-    应用B集成MCP        :done, mcp3, 15, 20
-    应用C集成MCP        :done, mcp4, 15, 20
-    应用D集成MCP        :done, mcp5, 15, 20
-    统一维护MCP服务器   :active, maintenance2, 20, 25
-```
-
-### 3. 维护成本对比
+### 2. 维护成本对比
 
 ```mermaid
 flowchart TD
@@ -720,14 +693,102 @@ graph TD
 ```
 
 
+## MCP 高级用法
 
+### 权限分级控制
+不同用户或应用可以有不同的工具访问权限：
+```typescript
+async function checkPermission(toolName: string, userId: string) {
+  const userRole = await getUserRole(userId);
+  const requiredPermission = TOOL_PERMISSIONS[toolName];
+  return hasPermission(userRole, requiredPermission);
+}
+server.tool(
+  'admin-operation',
+  '管理员操作',
+  { action: z.string() },
+  async ({ action }, context) => {
+    const userId = context.userId;
+    if (!await checkPermission('admin-operation', userId)) {
+      throw new Error('权限不足');
+    }
+    return await executeAdminAction(action);
+  }
+);
+```
 
+### 缓存优化
+对频繁调用的工具结果进行缓存：
+```typescript
+const cache = new Map();
 
+server.tool(
+  'expensive-computation',
+  '昂贵的计算操作',
+  { input: z.string() },
+  async ({ input }) => {
+    const cacheKey = `compute_${hash(input)}`;
+    if (cache.has(cacheKey)) {
+      return cache.get(cacheKey);
+    }
+    const result = await performExpensiveComputation(input);
+    cache.set(cacheKey, result);
+    return result;
+  }
+);
+```
+
+### 流式处理
+对于大量数据或长时间运行的任务，支持流式响应：
+```typescript
+server.tool(
+  'analyze-large-dataset',
+  '分析大型数据集',
+  { datasetId: z.string() },
+  async function* ({ datasetId }) {
+    const chunks = await getDatasetChunks(datasetId);
+    
+    for (const chunk of chunks) {
+      const result = await processChunk(chunk);
+      yield {
+        content: [{
+          type: 'text',
+          text: `处理进度: ${result.progress}%\n结果: ${result.summary}`
+        }]
+      };
+    }
+  }
+);
+```
+
+### 资源管理
+除了工具调用，MCP 还支持资源管理，允许大模型访问文件、数据库记录等。
+
+```typescript
+// 注册资源
+server.resource(
+  'file:///projects/{projectId}/files',
+  '项目文件列表',
+  async ({ projectId }) => {
+    const files = await getProjectFiles(projectId);
+    return {
+      contents: files.map(file => ({
+        uri: `file://${file.path}`,
+        mimeType: 'text/plain',
+        text: file.content
+      }))
+    };
+  }
+);
+
+// 客户端读取资源
+const resources = await mcpClient.readResource('file:///projects/123/files');
+```
 
 
 
 ## 总结
-MCP 正成为 AI 应用生态的重要基础设施，让开发者专注于 AI 应用的核心逻辑，而不必为每个数据源重复实现连接代码。
+MCP 正成为 AI 应用生态的重要基础设施，让开发者专注于 AI 应用的核心逻辑，而不必为每个外部数据读取重复实现代码。
 
 ### MCP 的核心价值
 - **统一标准**: 降低集成成本，避免重复开发
@@ -748,5 +809,5 @@ MCP 正成为 AI 应用生态的重要基础设施，让开发者专注于 AI �
 - [MCP 官方文档](https://modelcontextprotocol.io/)
 - [MCP SDK](https://github.com/modelcontextprotocol/typescript-sdk)
 - [示例项目](https://gitlab-a3uxyvfhkudlt7.kesci.com/joy-yu/modelwhale-mcp-test)
-- [MCP Tool 收录(mcp.so)](https://mcp.so/zh)
-- [MCP Tool 收录(smithery.ai)](https://smithery.ai)
+- [MCP Tools 收录站(mcp.so)](https://mcp.so/zh)
+- [MCP Tools 收录站(smithery.ai)](https://smithery.ai)
