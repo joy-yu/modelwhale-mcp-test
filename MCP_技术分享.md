@@ -4,7 +4,9 @@
 - [什么是 MCP](#什么是-mcp)
 - [背景与痛点](#背景与痛点)
 - [MCP 解决方案](#mcp-解决方案)
-- [完整的大模型调用 MCP 流程](#完整的大模型调用-mcp-流程)
+- [大模型与 MCP 的完整调用流程](#大模型与-mcp-的完整调用流程)
+- [MCP 优势对比](#mcp-优势对比)
+- [MCP 高级用法](#mcp-高级用法)
 - [总结](#总结)
 
 
@@ -26,9 +28,9 @@ Model Context Protocol (MCP) 是由 Anthropic 开发的**开源标准协议**，
 graph TD
     subgraph "传统模式 - 重复实现"
         subgraph "自定义大模型应用"
-            C1[Custom App] --> C2[又一次实现天气API]
-            C1 --> C3[又一次实现数据库连接]
-            C1 --> C4[又一次实现文件系统]
+            C1[Custom App] --> C2[重复实现天气API]
+            C1 --> C3[重复实现数据库连接]
+            C1 --> C4[重复实现文件系统]
         end
         
         subgraph "Claude 应用"
@@ -38,9 +40,9 @@ graph TD
         end
         
         subgraph "OpenAI 应用"
-            A1[OpenAI Chat App] --> A2[自建天气API]
-            A1 --> A3[自建数据库连接]
-            A1 --> A4[自建文件系统]
+            A1[OpenAI Chat App] --> A2[重复实现天气API]
+            A1 --> A3[重复实现数据库连接]
+            A1 --> A4[重复实现文件系统]
         end
     end
     
@@ -482,26 +484,30 @@ sequenceDiagram
     AI->>User: "您有以下项目：项目A、项目B..."
     
     Note over User,API: 4. 链式调用示例
-    User->>AI: "显示项目A的所有Notebook"
+    User->>AI: "分析一下我最近一个项目的 Notebook"
+    AI->>MCP: tools/call (name: "get-lab-list", arguments: {})
+    MCP->>API: HTTP请求 /api/user/labs
+    API->>MCP: 返回项目列表数据
+    MCP->>AI: 返回格式化的结果
     AI->>AI: 从上下文提取项目ID
-    AI->>MCP: tools/call (name: "get-notebooks-from-lab", arguments: {"id": "proj_123"})
-    MCP->>API: HTTP请求 /api/notebooks?Lab=proj_123
-    API->>MCP: 返回Notebook数据
-    MCP->>AI: 返回Notebook列表
-    AI->>AI: 从上下文提取项目ID
-    AI->>MCP: tools/call (name: "get-notebooks-from-lab", arguments: {"id": "proj_123"})
-    MCP->>API: HTTP请求 /api/notebooks?Lab=proj_123
-    API->>MCP: 返回Notebook数据
-    MCP->>AI: 返回Notebook列表
-    AI->>User: "项目A包含以下Notebook：..."
+    AI->>MCP: tools/call (name: "get-notebooks-from-lab", arguments: {"id": "xxx"})
+    MCP->>API: HTTP请求 /api/notebooks?Lab=xxx
+    API->>MCP: 返回 Notebook 数据
+    MCP->>AI: 返回格式化的 Notebook 数据
+    AI->>AI: 从上下文提取 Notebook ID
+    AI->>MCP: tools/call (name: "get-notebook-ipynb", arguments: {"id": "xxx"})
+    MCP->>API: HTTP请求 /api/notebooks/xxx/file
+    API->>MCP: 返回 Notebook ipynb
+    MCP->>AI: 返回格式化的 Notebook ipynb
+    AI->>AI: 整合结果到对话上下文
+    AI->>User: "该 Notebook 主要实现了..."
 ```
 
 
 
 
 
-
-## MCP 核心优势
+## MCP 优势对比
 
 ### 1. 解决重复实现问题
 
