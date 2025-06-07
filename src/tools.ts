@@ -74,10 +74,12 @@ function registerLabTool(server: McpServer) {
       }
 
       return {
-        content: resp.data.map((v) => ({
-          type: 'text',
-          text: [`项目名称: ${v.Title}`, `项目描述: ${v.Description || '无'}`, `更新时间: ${v.UpdateDate}`, `项目 ID: ${v._id}`].join('\n'),
-        })),
+        content: [
+          {
+            type: 'text',
+            text: resp.data.map((v) => [`项目名称: ${v.Title}`, `项目描述: ${v.Description || '无'}`, `更新时间: ${v.UpdateDate}`, `项目 ID: ${v._id}`].join('\n')).join('\n\n'),
+          },
+        ],
       };
     }
   );
@@ -100,12 +102,15 @@ function registerLabTool(server: McpServer) {
       const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/notebooks?${params}`, { headers: { authorization: detailResp.labToken } });
 
       return {
-        content: resp.data
-          .filter((v) => !v.IsCanvas)
-          .map((v) => ({
+        content: [
+          {
             type: 'text',
-            text: [`Notebook 名称: ${v.Name}`, `Notebook ID: ${v._id}`].join('\n'),
-          })),
+            text: resp.data
+              .filter((v) => !v.IsCanvas)
+              .map((v) => [`Notebook 名称: ${v.Name}`, `Notebook ID: ${v._id}`].join('\n'))
+              .join('\n\n'),
+          },
+        ],
       };
     }
   );
@@ -150,17 +155,10 @@ function registerLabTool(server: McpServer) {
 
       return {
         content: [
-          // {
-          //   type: 'text',
-          //   text: `当前页数: ${page}`,
-          // },
-          // {
-          //   type: 'text',
-          //   text: `总页数: ${total_page}`,
-          // },
           {
             type: 'text',
             text: resp,
+            // text: [`当前页数: ${page}\n总页数: ${total_page}`, resp].join('\n\n'),
           },
         ],
       };
@@ -191,10 +189,12 @@ function registerMpiJobTool(server: McpServer) {
     }
 
     return {
-      content: resp.data.map((v) => ({
-        type: 'text',
-        text: [`任务名称: ${v.Name}`, `任务状态: ${statusMap[v.Status] || '未知状态'}`, `任务 ID: ${v._id}`].join('\n'),
-      })),
+      content: [
+        {
+          type: 'text',
+          text: resp.data.map((v) => [`任务名称: ${v.Name}`, `任务状态: ${statusMap[v.Status] || '未知状态'}`, `任务 ID: ${v._id}`].join('\n')).join('\n\n'),
+        },
+      ],
     };
   });
 
@@ -243,12 +243,15 @@ function registerModelServiceTool(server: McpServer) {
     }
 
     return {
-      content: resp.data
-        .filter((v) => v.Status !== -1)
-        .map((v) => ({
+      content: [
+        {
           type: 'text',
-          text: [`模型服务名称: ${v.Title}`, `模型服务状态: ${statusMap[v.Status] || '未知状态'}`, `模型服务 ID: ${v._id}`].join('\n'),
-        })),
+          text: resp.data
+            .filter((v) => v.Status !== -1)
+            .map((v) => [`模型服务名称: ${v.Title}`, `模型服务状态: ${statusMap[v.Status] || '未知状态'}`, `模型服务 ID: ${v._id}`].join('\n'))
+            .join('\n\n'),
+        },
+      ],
     };
   });
 
