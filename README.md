@@ -1,6 +1,6 @@
 # MCP ModelWhale 服务器
 
-这是一个模型上下文协议 (MCP) 服务器，可通过 User Token 访问 ModelWhale API 拿到相关信息。支持三种传输方式：stdio、SSE (Server-Sent Events) 和 StreamableHTTP，通过环境变量控制。
+这是一个模型上下文协议 (MCP) 服务器，可通过 User Token 访问 ModelWhale API 拿到相关信息。支持三种传输方式：stdio、~~SSE (Server-Sent Events)~~ 和 StreamableHTTP，通过环境变量控制。
 
 ## 先决条件
 
@@ -28,7 +28,7 @@
 ## 开发调试
 
 开发时可以使用以下命令自动构建并启动：
-- 已支持 dev 热更新，测试下来  **SSE 模式开发调试更方便**
+- 已支持 dev 调试热更新
 - dev 默认开启 inspector，运行命令后打开 http://127.0.0.1:6274 访问即可
 
 ```bash
@@ -37,9 +37,6 @@ npm run dev
 
 # stdio 开发模式
 npm run dev:stdio
-
-# SSE 开发模式(推荐)
-npm run dev:sse
 
 # StreamableHTTP 开发模式
 npm run dev:streamable
@@ -63,26 +60,8 @@ TRANSPORT_MODE=stdio npm start
 npm run start:stdio
 ```
 
-### 方式 2: SSE 传输方式
 
-```bash
-# 使用 SSE 传输方式
-npm run start:sse
-
-# 或者
-TRANSPORT_MODE=sse npm start
-
-# 自定义端口（默认为3000）
-TRANSPORT_MODE=sse PORT=8080 npm start
-```
-
-SSE 服务器提供以下端点：
-- `GET /sse` - 建立 SSE 连接
-- `POST /messages` - 发送消息到服务器
-- `GET /health` - 健康检查端点
-
-
-### 方式 3: StreamableHTTP 传输方式（推荐）
+### 方式 2: StreamableHTTP 传输方式（推荐）
 
 ```bash
 # 使用 StreamableHTTP 传输方式
@@ -104,7 +83,7 @@ StreamableHTTP 服务器提供以下端点：
 
 ## 传输方式对比
 
-| 特性     | stdio        | SSE                       | StreamableHTTP       |
+| 特性     | stdio        | ~~SSE(官方已废弃)~~                       | StreamableHTTP       |
 | -------- | ------------ | ------------------------- | -------------------- |
 | 连接方式 | 标准输入输出 | HTTP + Server-Sent Events | HTTP + 流式响应      |
 | 网络要求 | 无           | 需要HTTP连接              | 需要HTTP连接         |
@@ -118,35 +97,6 @@ StreamableHTTP 服务器提供以下端点：
 
 
 ## 测试服务器
-
-### 测试 SSE 服务器
-
-您可以使用以下命令测试 SSE 服务器的各个端点：
-
-```bash
-# 健康检查
-curl http://localhost:3000/health
-
-# 建立 SSE 连接（会保持连接打开）
-curl -N http://localhost:3000/sse
-
-# 发送测试消息（需要先建立 SSE 连接获取 sessionId）
-curl -X POST http://localhost:3000/messages?sessionId=YOUR_SESSION_ID \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
-```
-
-或者使用项目中提供的测试脚本：
-
-```bash
-# 启动 SSE 服务器
-npm run start:sse
-
-# 在另一个终端运行测试
-node test/test-sse.js
-```
-
-### 测试 StreamableHTTP 服务器
 
 您可以使用以下命令测试 StreamableHTTP 服务器：
 
