@@ -6,12 +6,13 @@ const MODELWHALE_TOKEN = process.env.MODELWHALE_TOKEN!;
 const USER_AGENT = 'modelwhale-app/1.0.0';
 
 // API 请求辅助函数
-async function request<T>(url: string, config?: RequestInit): Promise<T | null> {
+async function request<T>(url: string, config?: RequestInit & { token?: string }): Promise<T | null> {
   const method = config?.method || 'GET';
+  const token = config?.token || MODELWHALE_TOKEN;
   const headers = {
     'User-Agent': USER_AGENT,
     Accept: 'application/json',
-    'x-kesci-token': MODELWHALE_TOKEN,
+    'x-kesci-token': token,
     ...config?.headers,
   };
 
@@ -55,7 +56,7 @@ function getDefaultError(message?: string) {
 }
 
 // 注册项目工具
-function registerLabTool(server: McpServer) {
+function registerLabTool(server: McpServer, token: string) {
   server.tool(
     'get-lab-list',
     '获取我的项目列表',
@@ -68,7 +69,7 @@ function registerLabTool(server: McpServer) {
         // page: `${page}`,
         // perPage: `${perPage}`,
       });
-      const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/user/labs?${params}`);
+      const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/user/labs?${params}`, { token });
       if (!resp) {
         return getDefaultError();
       }
@@ -91,7 +92,7 @@ function registerLabTool(server: McpServer) {
       id: z.string().describe('项目 ID'),
     },
     async ({ id }) => {
-      const detailResp = await request<any>(`${MODELWHALE_BASE_URL}/api/labs/${id}`, { headers: { 'x-kesci-mod': '5', 'x-kesci-resource': id } });
+      const detailResp = await request<any>(`${MODELWHALE_BASE_URL}/api/labs/${id}`, { token, headers: { 'x-kesci-mod': '5', 'x-kesci-resource': id } });
       if (!detailResp) {
         return getDefaultError();
       }
@@ -99,7 +100,7 @@ function registerLabTool(server: McpServer) {
       const params = new URLSearchParams({
         Lab: id,
       });
-      const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/notebooks?${params}`, { headers: { authorization: detailResp.labToken } });
+      const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/notebooks?${params}`, { token, headers: { authorization: detailResp.labToken } });
 
       return {
         content: [
@@ -134,7 +135,7 @@ function registerLabTool(server: McpServer) {
         resp = cachedIpynbFile.get(id);
       } else {
         const params = new URLSearchParams({});
-        resp = await request<any>(`${MODELWHALE_BASE_URL}/api/notebooks/${id}/file?${params}`);
+        resp = await request<any>(`${MODELWHALE_BASE_URL}/api/notebooks/${id}/file?${params}`, { token });
 
         cachedIpynbFile.clear();
         cachedIpynbFile.set(id, resp);
@@ -167,7 +168,7 @@ function registerLabTool(server: McpServer) {
 }
 
 // 注册离线任务工具
-function registerMpiJobTool(server: McpServer) {
+function registerMpiJobTool(server: McpServer, token: string) {
   const statusMap = {
     '-4': '已停止',
     '-3': '暂停中',
@@ -183,7 +184,7 @@ function registerMpiJobTool(server: McpServer) {
       IsGroupJob: 'false',
       IsMainWorkflow: 'false',
     });
-    const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/mpiJobs?${params}`);
+    const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/mpiJobs?${params}`, { token });
     if (!resp) {
       return getDefaultError();
     }
@@ -205,7 +206,7 @@ function registerMpiJobTool(server: McpServer) {
       id: z.string().describe('离线任务 ID'),
     },
     async ({ id }) => {
-      const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/mpiJobs/${id}/logs`);
+      const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/mpiJobs/${id}/logs`, { token });
       if (!resp) {
         return getDefaultError();
       }
@@ -223,7 +224,7 @@ function registerMpiJobTool(server: McpServer) {
 }
 
 // 注册模型服务工具
-function registerModelServiceTool(server: McpServer) {
+function registerModelServiceTool(server: McpServer, token: string) {
   const statusMap = {
     0: '启动中',
     1: '就绪',
@@ -237,7 +238,7 @@ function registerModelServiceTool(server: McpServer) {
     const params = new URLSearchParams({
       type: '1',
     });
-    const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/model/services?${params}`);
+    const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/model/services?${params}`, { token });
     if (!resp) {
       return getDefaultError();
     }
@@ -268,7 +269,7 @@ function registerModelServiceTool(server: McpServer) {
         tail: '100',
         direction: 'backward',
       });
-      const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/model/services/${id}/logs?${params}`);
+      const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/model/services/${id}/logs?${params}`, { token });
       if (!resp) {
         return getDefaultError();
       }
@@ -289,9 +290,9 @@ function registerModelServiceTool(server: McpServer) {
 }
 
 // 注册其它工具
-function registerOtherTool(server: McpServer) {
+function registerOtherTool(server: McpServer, token: string) {
   server.tool('get-token-coin', '获取本人剩余代币数量', {}, async ({}) => {
-    const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/wallets?Type=WHALECOIN`);
+    const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/wallets?Type=WHALECOIN`, { token });
     if (!resp) {
       return getDefaultError();
     }
@@ -308,9 +309,16 @@ function registerOtherTool(server: McpServer) {
 }
 
 // 注册所有工具的主函数
-export function registerAllTools(server: McpServer) {
-  registerLabTool(server);
-  registerMpiJobTool(server);
-  registerModelServiceTool(server);
-  registerOtherTool(server);
+export function registerAllTools(server: McpServer, token?: string) {
+  // 如果没有提供 token，尝试从环境变量获取（向后兼容）
+  const actualToken = token || process.env.MODELWHALE_TOKEN;
+
+  if (!actualToken) {
+    throw new Error('MODELWHALE_TOKEN 未设置，请通过参数或环境变量提供');
+  }
+
+  registerLabTool(server, actualToken);
+  registerMpiJobTool(server, actualToken);
+  registerModelServiceTool(server, actualToken);
+  registerOtherTool(server, actualToken);
 }
