@@ -5,6 +5,20 @@ const MODELWHALE_BASE_URL = process.env.MODELWHALE_BASE_URL || 'https://www.heyw
 const MODELWHALE_TOKEN = process.env.MODELWHALE_TOKEN!;
 const USER_AGENT = 'modelwhale-app/1.0.0';
 
+/**
+ * 返回一个用于搜索的正则表达式，可处理特殊字符
+ *
+ * @param searchText - 输入的搜索文本
+ * @returns 匹配搜索文本的正则表达式
+ *
+ * @example
+ * const regexp = getTextRegExp('hello world');
+ * regexp.test(fullText); // 如果 fullText 包含 'hello world'，则返回 true
+ */
+function getTextRegExp(searchText: string) {
+  return new RegExp(searchText.replace(/[\W]/g, '\\$&'), 'i');
+}
+
 // API 请求辅助函数
 async function request<T>(url: string, config?: RequestInit & { token?: string }): Promise<T | null> {
   const method = config?.method || 'GET';
@@ -61,14 +75,18 @@ function registerLabTool(server: McpServer, token: string) {
     'get-lab-list',
     '获取我的项目列表',
     {
+      Title: z.string().optional().describe('项目名称'),
       // page: z.number().min(1).optional().default(1).describe('页码'),
       // perPage: z.number().min(1).optional().default(10).describe('每页返回的项目数量')
     },
-    async ({}) => {
+    async ({ Title }) => {
       const params = new URLSearchParams({
+        Title: Title || '',
         // page: `${page}`,
         // perPage: `${perPage}`,
       });
+      if (!params.get('Title')) params.delete('Title');
+
       const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/user/labs?${params}`, { token });
       if (!resp) {
         return getDefaultError();
@@ -289,6 +307,43 @@ function registerModelServiceTool(server: McpServer, token: string) {
   );
 }
 
+// 注册代码片段工具
+function registerCodeSnippetTool(server: McpServer, token: string) {
+  server.tool(
+    'search-code-snippet',
+    '搜索代码片段',
+    {
+      Name: z.string().describe('代码片段名称'),
+      Language: z.enum(['python', 'ir', 'julia']).default('python').describe('语言类型 python | ir | julia'),
+    },
+    async ({ Name, Language }) => {
+      if (!Name) {
+        return getDefaultError('代码片段名称不能为空');
+      }
+
+      const params = new URLSearchParams({});
+
+      const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/snippet?${params}`, { token });
+      if (!resp) {
+        return getDefaultError();
+      }
+
+      const regexp = getTextRegExp(Name);
+
+      const list = ([].concat(resp.official, resp.private) as any[]).filter((v) => regexp.test(v.Name) || regexp.test(v.FolderName)).filter((v) => v.Language.includes(Language));
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: list.map((v) => [`${v.Name}`, `\`\`\`\n${v.Code}\n\`\`\``].join('\n')).join('\n\n'),
+          },
+        ],
+      };
+    }
+  );
+}
+
 // 注册其它工具
 function registerOtherTool(server: McpServer, token: string) {
   server.tool('get-token-coin', '获取本人剩余代币数量', {}, async ({}) => {
@@ -320,5 +375,6 @@ export function registerAllTools(server: McpServer, token?: string) {
   registerLabTool(server, actualToken);
   registerMpiJobTool(server, actualToken);
   registerModelServiceTool(server, actualToken);
+  registerCodeSnippetTool(server, actualToken);
   registerOtherTool(server, actualToken);
 }

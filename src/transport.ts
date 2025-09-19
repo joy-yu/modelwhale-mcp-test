@@ -10,7 +10,6 @@ const streamableTransports: Map<string, StreamableHTTPServerTransport> = new Map
 // stdio 模式运行器
 export async function runStdioMode() {
   // stdio 模式下，不能用 console.log，因为 stdout 会用于 MCP 协议通信
-  // console.error('启动 MCP ModelWhale服务器 (stdio 模式)');
 
   const token = process.env.MODELWHALE_TOKEN;
   if (!token) {
@@ -22,7 +21,6 @@ export async function runStdioMode() {
   const transport = new StdioServerTransport();
 
   await server.connect(transport);
-  // console.error('ModelWhale MCP 服务器正在通过 stdio 运行');
 }
 
 // StreamableHTTP 模式运行器
