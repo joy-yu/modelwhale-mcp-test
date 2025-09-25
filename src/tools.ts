@@ -72,7 +72,7 @@ function getDefaultError(message?: string) {
 // 注册项目工具
 function registerLabTool(server: McpServer, token: string) {
   server.tool(
-    'get-lab-list',
+    'get-my-lab-list',
     '获取我的项目列表',
     {
       Title: z.string().optional().describe('项目名称'),
@@ -82,6 +82,39 @@ function registerLabTool(server: McpServer, token: string) {
     async ({ Title }) => {
       const params = new URLSearchParams({
         Title: Title || '',
+        // page: `${page}`,
+        // perPage: `${perPage}`,
+      });
+      if (!params.get('Title')) params.delete('Title');
+
+      const resp = await request<any>(`${MODELWHALE_BASE_URL}/api/user/labs?${params}`, { token });
+      if (!resp) {
+        return getDefaultError();
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: resp.data.map((v) => [`项目名称: ${v.Title}`, `项目描述: ${v.Description || '无'}`, `更新时间: ${v.UpdateDate}`, `项目 ID: ${v._id}`].join('\n')).join('\n\n'),
+          },
+        ],
+      };
+    }
+  );
+
+  server.tool(
+    'get-shared-lab-list',
+    '获取他人分享的项目列表',
+    {
+      Title: z.string().optional().describe('项目名称'),
+      // page: z.number().min(1).optional().default(1).describe('页码'),
+      // perPage: z.number().min(1).optional().default(10).describe('每页返回的项目数量')
+    },
+    async ({ Title }) => {
+      const params = new URLSearchParams({
+        Title: Title || '',
+        type: '2',
         // page: `${page}`,
         // perPage: `${perPage}`,
       });
