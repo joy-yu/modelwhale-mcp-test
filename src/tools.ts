@@ -398,12 +398,7 @@ function registerOtherTool(server: McpServer, token: string) {
 
 // 注册所有工具的主函数
 export function registerAllTools(server: McpServer, token?: string) {
-  // 如果没有提供 token，尝试从环境变量获取（向后兼容）
-  const actualToken = token || process.env.MODELWHALE_TOKEN;
-
-  if (!actualToken) {
-    throw new Error('MODELWHALE_TOKEN 未设置，请通过参数或环境变量提供');
-  }
+  const actualToken = (token || process.env.MODELWHALE_TOKEN)!;
 
   registerLabTool(server, actualToken);
   registerMpiJobTool(server, actualToken);
